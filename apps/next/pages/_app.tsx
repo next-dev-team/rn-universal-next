@@ -15,6 +15,18 @@ function MyApp({ Component, pageProps }: SolitoAppProps) {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+      <>
+        <style type="text/css">{`
+        @font-face {
+          font-family: 'MaterialIcons';
+          src: url('/fonts/MaterialIcons.ttf') format('truetype');
+        }
+        @font-face {
+          font-family: 'AntDesign';
+          src: url('/fonts/AntDesign.ttf') format('truetype');
+        }
+      `}</style>
+      </>
       <Provider>
         <Component {...pageProps} />
       </Provider>

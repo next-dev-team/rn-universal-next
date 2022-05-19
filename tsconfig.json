@@ -2,6 +2,7 @@
   "compilerOptions": {
     "strictNullChecks": true,
     "noUncheckedIndexedAccess": true,
+    "module": "CommonJS",
     "paths": {
       "app/*": ["./packages/app/*"]
     }

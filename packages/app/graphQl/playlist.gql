@@ -1,0 +1,22 @@
+query Playlists($orderBy: PlaylistOrderByInput, $stage: Stage!, $first: Int) {
+  playlists(orderBy: $orderBy, stage: $stage, first: $first) {
+    title
+    url
+    stage
+    coverImg
+    id
+  }
+}
+
+
+mutation CreatePlaylist($data: PlaylistCreateInput = { title: "", url: "", coverImg: "" }) {
+  createPlaylist(data: $data) {
+    id
+  }
+}
+
+mutation DeletePlaylist($where: PlaylistWhereUniqueInput!) {
+  deletePlaylist(where: $where) {
+    title
+  }
+}

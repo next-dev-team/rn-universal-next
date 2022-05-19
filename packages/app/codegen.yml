@@ -1,0 +1,47 @@
+# more config option https://www.graphql-code-generator.com/docs/generated-config/typescript
+
+# Endpoint API, the following URL is a example
+schema: https://api-ap-northeast-1.graphcms.com/v2/cl37clyyk82h601xq9zcjf9h4/master
+
+overwrite: true
+
+# Format files
+hooks:
+  afterAllFileWrite:
+    - prettier --write
+
+generates:
+  # Get schemas from server
+  graphQl/schemas.tsx:
+    documents: "**/**.gql"
+    plugins:
+      - typescript
+
+  # Create operations based on queries
+  graphQl/operations.tsx:
+    documents: "**/**.gql"
+    preset: import-types
+    presetConfig:
+      typesPath: ./schemas
+    plugins:
+      - typescript-operations
+
+  # 1. Export GraphQL documents
+  # 2. React interface
+  graphQl/hooks.tsx:
+    documents: "**/**.gql"
+    preset: import-types
+    presetConfig:
+      typesPath: ./operations
+    plugins:
+      - typescript-react-apollo
+    config:
+      # Optionals
+      withHOC: false
+      withComponent: false
+      withHooks: true
+      reactApolloVersion: 3
+      useImplementingTypes: true
+      disableDescriptions: true
+      maybeValue: T | null | undefined
+      enumsAsTypes: true

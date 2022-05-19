@@ -9,6 +9,8 @@ module.exports = withNativebase({
     'react-native-vector-icons-for-web',
     'solito',
     'app',
+    'react-native-big-list',
+    'expo-av'
   ],
   nextConfig: {
     projectRoot: __dirname,

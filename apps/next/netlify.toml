@@ -1,0 +1,9 @@
+[build]
+  base    = "apps/next"
+  publish = "/.next"
+  command = "yarn build"
+
+  [build.environment]
+  YARN_VERSION = "1.22.10"
+  NETLIFY_USE_YARN = "true"
+  NODE_VERSION = "14.17.0" 

@@ -26,7 +26,10 @@
     "react-native-big-list": "^1.5.4",
     "react-native-svg": "^12.3.0",
     "react-native-web": "^0.17.7",
-    "solito": "0.0.22"
+    "solito": "0.0.22",
+    "react-h5-audio-player":"^3.8.4",
+    "ahooks":"^3.3.12",
+    "react-fast-marquee": "^1.3.2"
   },
   "sideEffects": false
 }

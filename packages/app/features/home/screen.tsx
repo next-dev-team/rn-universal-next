@@ -1,5 +1,5 @@
 import { Link as SolitoLink } from 'solito/link'
-import React from 'react'
+import React, { useRef } from 'react'
 import BigList from 'react-native-big-list'
 import * as Av from 'expo-av/build'
 
@@ -13,6 +13,11 @@ import {
   Box,
   useTheme,
   Row,
+  Text,
+  Select,
+  Heading,
+  Input,
+  Icon,
 } from 'native-base'
 import { BlogCard, ColorModeSwitch } from '../../components'
 import { usePlaylistsQuery } from 'app/graphQl/hooks'
@@ -24,17 +29,40 @@ import {
   Platform,
   useWindowDimensions,
 } from 'react-native'
+import { useDebounce, useDebounceFn, useReactive } from 'ahooks'
+
 import { Sound } from 'expo-av/build/Audio'
+import Player from './Player'
+import H5AudioPlayer from 'react-h5-audio-player'
+import Marquee from '../../components/marquee'
 
 const baseUrl = 'https://weread-oss.weread.asia/'
 
 LogBox.ignoreAllLogs()
+const checkUrlVideo = (url: string) => {
+  return (
+    url.includes('googlevideo') ||
+    url.includes('Video') ||
+    url.includes('.mp4') ||
+    url.includes('youtube')
+  )
+}
 
 export function HomeScreen() {
   const { colors } = useTheme()
-  const { height } = useWindowDimensions()
+
+  const { height, width } = useWindowDimensions()
   const [play, setPlay] = React.useState(false)
   const [newSound, setNewSound] = React.useState<Sound>(null as any)
+  const state = useReactive({
+    url: '',
+    title: '',
+    coverImg: '',
+    openPlaylist: false,
+    isPlay: false,
+    search: '',
+  })
+
   const { data: playlistData, loading: loadingGetPlaylist } = usePlaylistsQuery(
     {
       variables: {
@@ -43,6 +71,27 @@ export function HomeScreen() {
         first: 1000000,
       },
     }
+  )
+
+  const { openPlaylist, title, url, coverImg, isPlay } = state
+  let [language, setLanguage] = React.useState<string>('key0')
+  const audioRef = useRef<H5AudioPlayer>(null)
+  const isVideoMode = checkUrlVideo(url)
+
+  const setPause = () => {
+    // audioRef.current?.audio.current.pause();
+    state.isPlay = false
+  }
+  // const setPlay = () => {
+  //   audioRef.current?.audio?.current.play();
+  //   state.isPlay = true;
+  // };
+  const { run: runSearch } = useDebounceFn(
+    (text) => {
+      state.search = text
+      console.log('search', text)
+    },
+    { wait: 500 }
   )
 
   async function playSound(url = '') {
@@ -55,6 +104,7 @@ export function HomeScreen() {
     sound.playAsync()
     console.log('Playing Sound')
   }
+  const currentPlayHeight = 120
 
   if (loadingGetPlaylist) {
     return (
@@ -65,33 +115,81 @@ export function HomeScreen() {
   }
   return (
     <Box flex={1}>
-      <VStack padding={5} pb={0} flex={1} maxHeight={height - 130}>
+      <Box px="5" py={2}>
+        <Input
+          defaultValue={state.search}
+          onChangeText={(text) => {
+            runSearch(text)
+          }}
+          placeholder="Search Audio & Video"
+          width="100%"
+          borderRadius="4"
+          px="1"
+          fontSize="14"
+          InputLeftElement={
+            <Icon
+              m="2"
+              ml="3"
+              size="6"
+              color="gray.400"
+              as={<AntDesign name="search1" />}
+            />
+          }
+        />
+      </Box>
+      <VStack px={5} pb={0} flex={1} maxHeight={height - currentPlayHeight}>
         <BigList
+          renderEmpty={() => {
+            return (
+              <Center bg={'gray.100'} w={width - 20} p="4" h={height/6}>
+                <AntDesign name="database" size={40} color={colors.gray[400]} />
+                <Text>There is no data</Text>
+              </Center>
+            )
+          }}
           itemHeight={65}
           keyExtractor={(item) => item.id}
-          data={playlistData?.playlists}
+          data={playlistData?.playlists.filter((item) =>
+            item.title
+              .toLocaleLowerCase()
+              .includes(state.search.toLocaleLowerCase())
+          )}
           renderItem={({ item }) => {
             return (
               <BlogCard
                 {...{
                   image: item?.coverImg,
                   title: item?.title,
+                  isPlayMode: url !== item.url || !state.isPlay,
                   onPress: async () => {
-                    if (newSound) {
-                      newSound?.getStatusAsync().then(async (status) => {
-                        //@ts-ignore
-                        if (status?.isPlaying) {
-                          setPlay(false)
-                          await newSound.pauseAsync()
-                        } else {
+                    if (Platform.OS === 'web') {
+                      state.url = item.url
+                      state.title = item.title
+                      state.coverImg = item.coverImg
+                      if (checkUrlVideo(item.url)) {
+                        audioRef?.current?.audio?.current?.pause()
+                        state.isPlay = false
+                      } else {
+                        state.isPlay = true
+                        audioRef?.current?.audio?.current?.play()
+                      }
+                    } else {
+                      if (newSound) {
+                        newSound?.getStatusAsync().then(async (status) => {
+                          //@ts-ignore
+                          if (status?.isPlaying) {
+                            setPlay(false)
+                            await newSound.pauseAsync()
+                          } else {
+                            await playSound(item?.url)
+                          }
+                        })
+                      } else {
+                        console.log('click play')
+
+                        if (!play) {
                           await playSound(item?.url)
                         }
-                      })
-                    } else {
-                      console.log('click play')
-
-                      if (!play) {
-                        await playSound(item?.url)
                       }
                     }
                   },
@@ -101,92 +199,55 @@ export function HomeScreen() {
           }}
         />
       </VStack>
-      <Row
-        position="absolute"
-        bottom={0}
-        w="full"
-        bg="red.400"
-        justifyContent="space-between"
-        alignItems="center"
-        h={'12'}
-      >
-        <AntDesign
-          name="playcircleo"
-          size={26}
-          color={useTheme().colors.green[400]}
-        />
-        {!play ? (
-          <AntDesign
-            name="playcircleo"
-            size={26}
-            onPress={() => {}}
-            color={colors.green[400]}
-          />
-        ) : (
-          <AntDesign
-            name="pausecircleo"
-            size={26}
-            onPress={async () => {
-              await newSound?.pauseAsync()
-              setPlay(false)
+
+      <Box position="absolute" bottom={0} w="full" h={currentPlayHeight}>
+        <Box width="full">
+          <Marquee
+            style={{
+              backgroundColor: 'black',
             }}
-            color={colors.white}
-          />
+            speed={40}
+          >
+            <Text color="white" h={'8'} pt="1.5" textTransform="capitalize">
+              {title || 'please select your favorite'}
+            </Text>
+          </Marquee>
+        </Box>
+        {Platform.OS === 'web' ? (
+          <Player {...{ audioRef, baseUrl, isVideoMode, url }} />
+        ) : (
+          <>
+            <AntDesign
+              name="playcircleo"
+              size={26}
+              color={useTheme().colors.green[400]}
+            />
+            {!play ? (
+              <AntDesign
+                name="playcircleo"
+                size={26}
+                onPress={() => {}}
+                color={colors.green[400]}
+              />
+            ) : (
+              <AntDesign
+                name="pausecircleo"
+                size={26}
+                onPress={async () => {
+                  await newSound?.pauseAsync()
+                  setPlay(false)
+                }}
+                color={colors.white}
+              />
+            )}
+            <AntDesign
+              name="playcircleo"
+              size={26}
+              color={useTheme().colors.green[400]}
+            />
+          </>
         )}
-        <AntDesign
-          name="playcircleo"
-          size={26}
-          color={useTheme().colors.green[400]}
-        />
-      </Row>
+      </Box>
     </Box>
-    // <Center
-    //   flex={1}
-    //   _dark={{ bg: 'blueGray.900' }}
-    //   _light={{ bg: 'blueGray.50' }}
-    // >
-    //   <VStack alignItems="center" space="md">
-    //     <AspectRatio w={40} ratio={1}>
-    //       <Image
-    //         rounded="full"
-    //         source={{
-    //           uri: 'https://pbs.twimg.com/profile_images/1403658675655372800/mQJWWQhA_400x400.jpg',
-    //         }}
-    //         alt="NextJS Logo"
-    //         resizeMode="contain"
-    //       />
-    //     </AspectRatio>
-    //     <Heading>NativeBase + Solito ❤️</Heading>
-    //     <Text>
-    //       Edit <Code>packages/app/home/screen.tsx</Code> and save to reload.
-    //     </Text>
-    //     <HStack alignItems="center" space="sm">
-    //       <Link href="https://solito.dev/" isExternal>
-    //         <Text
-    //           _light={{ color: 'gray.700' }}
-    //           _dark={{ color: 'gray.400' }}
-    //           underline
-    //           fontSize={'xl'}
-    //         >
-    //           Learn Solito
-    //         </Text>
-    //       </Link>
-    //       <Text>/</Text>
-    //       <Link href="https://docs.nativebase.io" isExternal>
-    //         <Text color="primary.500" underline fontSize={'xl'}>
-    //           Learn NativeBase
-    //         </Text>
-    //       </Link>
-    //     </HStack>
-    //   </VStack>
-    //   <ColorModeSwitch />
-    //   <Box mt="6">
-    //     <SolitoLink href="/user/NativeBase">
-    //       <Button pointerEvents="none" variant="outline" colorScheme="coolGray">
-    //         Open User Detail
-    //       </Button>
-    //     </SolitoLink>
-    //   </Box>
-    // </Center>
   )
 }

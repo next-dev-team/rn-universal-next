@@ -8,6 +8,10 @@
     "platforms": ["ios", "android"],
     "ios": {
       "bundleIdentifier": "com.solito.blank"
+    },
+    "android": {
+      "package": "com.yourcompany.yourappname",
+      "versionCode": 1
     }
   }
 }

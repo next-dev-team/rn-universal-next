@@ -17,7 +17,8 @@ export function NativeNavigation() {
         name="home"
         component={HomeScreen}
         options={{
-          title: 'ANAKOT_DEV KOMSAN',
+          title: 'Kamsan TV',
+          // headerShown: false,
         }}
       />
       <Stack.Screen

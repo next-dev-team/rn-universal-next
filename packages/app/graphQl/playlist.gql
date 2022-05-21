@@ -20,3 +20,12 @@ mutation DeletePlaylist($where: PlaylistWhereUniqueInput!) {
     title
   }
 }
+
+query playlist($where: PlaylistWhereUniqueInput!) {
+  playlist(where: $where) {
+    id
+    url
+    title
+    coverImg
+  }
+}

@@ -1,8 +1,7 @@
-import { Link as SolitoLink } from 'solito/link'
 import React, { useRef } from 'react'
 import BigList from 'react-native-big-list'
 import * as Av from 'expo-av/build'
-
+import { useRouter } from 'solito/router'
 const expoAv = Platform.OS !== 'web' ? require('expo-av') : {}
 import AntDesign from '@expo/vector-icons/AntDesign'
 const { Audio } = expoAv as typeof Av
@@ -28,6 +27,7 @@ import {
   LogBox,
   Platform,
   useWindowDimensions,
+  RefreshControl,
 } from 'react-native'
 import { useDebounce, useDebounceFn, useReactive } from 'ahooks'
 
@@ -50,7 +50,7 @@ const checkUrlVideo = (url: string) => {
 
 export function HomeScreen() {
   const { colors } = useTheme()
-
+  const { push, parseNextPath } = useRouter()
   const { height, width } = useWindowDimensions()
   const [play, setPlay] = React.useState(false)
   const [newSound, setNewSound] = React.useState<Sound>(null as any)
@@ -63,15 +63,18 @@ export function HomeScreen() {
     search: '',
   })
 
-  const { data: playlistData, loading: loadingGetPlaylist } = usePlaylistsQuery(
-    {
-      variables: {
-        orderBy: PlaylistOrderByInput.CreatedAtDesc,
-        stage: Stage.Draft,
-        first: 1000000,
-      },
-    }
-  )
+  const {
+    data: playlistData,
+    loading: loadingGetPlaylist,
+    refetch: refetchPlaylist,
+  } = usePlaylistsQuery({
+    variables: {
+      orderBy: PlaylistOrderByInput.CreatedAtDesc,
+      stage: Stage.Draft,
+      first: 1000000,
+    },
+    fetchPolicy: 'cache-first',
+  })
 
   const { openPlaylist, title, url, coverImg, isPlay } = state
   let [language, setLanguage] = React.useState<string>('key0')
@@ -141,7 +144,7 @@ export function HomeScreen() {
         <BigList
           renderEmpty={() => {
             return (
-              <Center bg={'gray.100'} w={width - 20} p="4" h={height/6}>
+              <Center bg={'gray.100'} w={width - 20} p="4" h={height / 6}>
                 <AntDesign name="database" size={40} color={colors.gray[400]} />
                 <Text>There is no data</Text>
               </Center>
@@ -162,6 +165,16 @@ export function HomeScreen() {
                   title: item?.title,
                   isPlayMode: url !== item.url || !state.isPlay,
                   onPress: async () => {
+                    if (checkUrlVideo(item.url)) {
+                      push({
+                        pathname: '/user/[id]',
+                        query: {
+                          id: item.id,
+                        },
+                      })
+                      return
+                    }
+
                     if (Platform.OS === 'web') {
                       state.url = item.url
                       state.title = item.title
@@ -213,40 +226,16 @@ export function HomeScreen() {
             </Text>
           </Marquee>
         </Box>
-        {Platform.OS === 'web' ? (
-          <Player {...{ audioRef, baseUrl, isVideoMode, url }} />
-        ) : (
-          <>
-            <AntDesign
-              name="playcircleo"
-              size={26}
-              color={useTheme().colors.green[400]}
-            />
-            {!play ? (
-              <AntDesign
-                name="playcircleo"
-                size={26}
-                onPress={() => {}}
-                color={colors.green[400]}
-              />
-            ) : (
-              <AntDesign
-                name="pausecircleo"
-                size={26}
-                onPress={async () => {
-                  await newSound?.pauseAsync()
-                  setPlay(false)
-                }}
-                color={colors.white}
-              />
-            )}
-            <AntDesign
-              name="playcircleo"
-              size={26}
-              color={useTheme().colors.green[400]}
-            />
-          </>
-        )}
+
+        <Player
+          {...{
+            audioRef,
+            baseUrl,
+            isVideoMode,
+            url,
+            height: currentPlayHeight,
+          }}
+        />
       </Box>
     </Box>
   )

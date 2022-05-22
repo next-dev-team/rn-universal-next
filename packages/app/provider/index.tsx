@@ -1,6 +1,6 @@
 import { NavigationProvider } from './navigation'
 import React, { useEffect, useState } from 'react'
-import { Box, NativeBaseProvider } from 'native-base'
+import { Box, Center, NativeBaseProvider } from 'native-base'
 import {
   ApolloClient,
   createHttpLink,
@@ -49,7 +49,9 @@ export function Provider({ children }: { children: React.ReactNode }) {
     <ApolloProvider client={client}>
       <NavigationProvider>
         <NativeBaseProvider>
-          <Box flex={1} maxW='xl' m='auto'>{children}</Box>
+          <Box w={'full'} maxW="xl" mx="auto" flex={1}>
+            {children}
+          </Box>
         </NativeBaseProvider>
       </NavigationProvider>
     </ApolloProvider>

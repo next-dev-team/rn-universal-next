@@ -18,7 +18,7 @@ import {
   Input,
   Icon,
 } from 'native-base'
-import { BlogCard, ColorModeSwitch } from '../../components'
+import { BlogCard, ColorModeSwitch, Footer } from '../../components'
 import { usePlaylistsQuery } from 'app/graphQl/hooks'
 import { PlaylistOrderByInput, Stage } from 'app/graphQl/schemas'
 import {

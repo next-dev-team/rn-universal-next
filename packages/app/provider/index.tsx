@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { persistCache } from 'apollo3-cache-persist'
 import { setContext } from '@apollo/client/link/context'
 import { Platform } from 'react-native'
+import { Footer } from 'app/components'
 
 const cache = new InMemoryCache()
 
@@ -49,8 +50,9 @@ export function Provider({ children }: { children: React.ReactNode }) {
     <ApolloProvider client={client}>
       <NavigationProvider>
         <NativeBaseProvider>
-          <Box w={'full'} maxW="xl" mx="auto" flex={1}>
+          <Box w={'full'} maxW="xl" mx="auto" flex={1} safeAreaTop>
             {children}
+            <Footer />
           </Box>
         </NativeBaseProvider>
       </NavigationProvider>
